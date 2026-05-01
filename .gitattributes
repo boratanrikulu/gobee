@@ -1,0 +1,5 @@
+# Exclude vendored headers from GitHub's language statistics so the repo
+# reads as Go on the project page instead of being dominated by the BTF
+# dumps and libbpf header drops.
+**/vmlinux.h linguist-vendored
+**/bpf_helper_defs.h linguist-vendored
