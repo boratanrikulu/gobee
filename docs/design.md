@@ -1,6 +1,6 @@
 # Design
 
-gobee converts a strict subset of Go into BPF C. It also generates typed Go bindings for the userspace side: `Load<Stem>`, `objs.X` field access, `AttachAll`, plus your kernel-side struct types re-published. clang compiles the C. `cilium/ebpf` loads the result. gobee does not run clang and does not load programs into the kernel.
+gobee converts a strict subset of Go into BPF C. It also generates typed Go bindings for the userspace side: `Load<Stem>`, `objs.X` field access, `AttachAll`, plus your BPF program struct types re-published. clang compiles the C. `cilium/ebpf` loads the result. gobee does not run clang and does not load programs into the kernel.
 
 > The support matrix (Go subset, eBPF features, helpers, map types, program types) lives in [`status.md`](status.md). This file is about why the architecture looks the way it does.
 
@@ -98,11 +98,11 @@ This bit us once: XDP packet counters stuck at zero with no error in any log. Th
 
 ## Bindings: covering ebpf-go's load and attach surface
 
-The generated `<stem>_bindings.go` exists so userspace doesn't restate things the kernel-side code already declared. Three pieces:
+The generated `<stem>_bindings.go` exists so userspace doesn't restate things the BPF program code already declared. Three pieces:
 
 1. **Programs and maps as typed struct fields**, with `ebpf:"<elf-name>"` tags. Loads via `cilium/ebpf`'s `LoadAndAssign`, replacing `coll.Programs["X"]` and `coll.Maps["Y"]` with `objs.X` and `objs.Y`.
 2. **Per-program `Attach<Name>` helpers**, derived from each `//bpf:section` directive. XDP gets an ifindex parameter; tracepoints, kprobes, kretprobes take none. Plus `AttachAll(xdpIfindex int)` that runs them all and rolls back on failure.
-3. **User struct types and constants** re-published. The kernel-side `Event` struct lands in bindings verbatim so `binary.Read` on the userspace side has byte-identical layout. Lowercase consts (`kindExec`) become public in bindings (`KindExec`) so userspace can pattern-match without redeclaring values.
+3. **User struct types and constants** re-published. The `Event` struct lands in bindings verbatim so `binary.Read` on the userspace side has byte-identical layout. Lowercase consts (`kindExec`) become public in bindings (`KindExec`) so userspace can pattern-match without redeclaring values.
 
 `Load<Stem>` also runs [bpfvet](https://github.com/boratanrikulu/bpfvet)'s portability analyzer on the spec before calling `LoadAndAssign`. If the running kernel is too old, you get `bpf program needs kernel >= 5.8, host is 5.4` instead of an opaque `EINVAL` from the verifier.
 

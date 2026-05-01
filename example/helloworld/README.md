@@ -1,6 +1,6 @@
 # helloworld: gobee end-to-end example
 
-An XDP packet counter, keyed by ingress interface index. The kernel-side program is written in Go.
+An XDP packet counter, keyed by ingress interface index. The program is written in Go.
 
 The kernel program lives in [`bpf/src/counter.go`](bpf/src/counter.go). gobee transpiles it to BPF C, the Makefile compiles that with clang, and the userspace driver (`main.go`) loads the resulting `.o` via [cilium/ebpf](https://github.com/cilium/ebpf) and attaches it to a network interface. Same workflow as a hand-written BPF program. The only thing that's different is the kernel source.
 
@@ -51,7 +51,7 @@ Output looks like:
 
 ## How the bindings show up in main.go
 
-The generated `bpf/counter_bindings.go` gives userspace typed access to everything the kernel-side declared:
+The generated `bpf/counter_bindings.go` gives userspace typed access to everything the declared in BPF code:
 
 ```go
 spec, err := ebpf.LoadCollectionSpecFromReader(bytes.NewReader(bpf.Program))
@@ -64,7 +64,7 @@ defer closeAll(links)
 count, _ := objs.PerIface.Lookup(&key, &val)  // typed map access
 ```
 
-No `coll.Programs["CountPackets"]`, no `coll.Maps["PerIface"]`. If you rename the kernel-side function, the bindings get a new field name and the userspace caller stops compiling. That's the point.
+No `coll.Programs["CountPackets"]`, no `coll.Maps["PerIface"]`. If you rename the BPF program function, the bindings get a new field name and the userspace caller stops compiling. That's the point.
 
 `bpf.LoadCounter` also runs [bpfvet](https://github.com/boratanrikulu/bpfvet) on the spec before calling `LoadAndAssign`. If the host kernel is older than the program needs, you get `bpf program needs kernel >= 5.8, host is 5.4` instead of an opaque `EINVAL`.
 

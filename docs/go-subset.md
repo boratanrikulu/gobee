@@ -37,7 +37,7 @@ The validator emits a diagnostic for each of these. Most messages tell you what 
 | `defer`, `panic`, `recover` | No unwinding, no runtime |
 | Interfaces | No dynamic dispatch |
 | Methods on user types | Not supported |
-| Generics in user code | Not supported (gobee itself uses generics in the `bpf` package; user kernel-side code does not) |
+| Generics in user code | Not supported (gobee itself uses generics in the `bpf` package; user BPF program code does not) |
 | `range` | Use a constant-bounded `for` |
 | `switch` / type switch | Use `if / else if` |
 | Multi-return (other than the comma-ok cases) | Not supported |
@@ -203,7 +203,7 @@ Variadic helpers (`bpf_trace_printk`) and string-typed helpers don't have stubs 
 
 ## Imports
 
-Two imports are allowed in a kernel-side `.go` file:
+Two imports are allowed in a BPF source file:
 
 ```go
 import "github.com/boratanrikulu/gobee/bpf"

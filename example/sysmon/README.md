@@ -13,7 +13,7 @@ A small system-activity monitor that exercises a representative slice of gobee i
 | `OnProcExit` | tracepoint `sys_enter_exit_group` | `*bpf.SyscallEnterCtx` | `[exit]` with status code |
 | `OnTcpConnect` | kprobe `tcp_connect` | `*bpf.PtRegs` | `[tcp]` line |
 
-All six programs live in [`bpf/src/sysmon.go`](bpf/src/sysmon.go). About 100 lines of kernel-side Go.
+All six programs live in [`bpf/src/sysmon.go`](bpf/src/sysmon.go). About 100 lines of BPF Go.
 
 The userspace driver runs two concurrent loops: one reading the shared ringbuf, the other polling the packet-count map every 5 seconds. Single `objs.AttachAll(ifindex)` call handles every program; main.go never names a section string.
 
@@ -63,7 +63,7 @@ sysmon: tracing execve, openat, tcp_connect; XDP attached to lima0. ctrl-c to st
 ```
    ┌──────────────────────────┐                    ┌──────────────┐
    │  bpf/src/sysmon.go       │                    │  main.go     │
-   │  (kernel-side)           │                    │  (userspace) │
+   │  (BPF program)           │                    │  (userspace) │
    │                          │                    │              │
    │  OnPacket  ─► packets    │   poll every 5s   ►│   ticker     │
    │              ByIface     │   objs.PacketsByI- │              │
@@ -93,9 +93,9 @@ rd, _ := ringbuf.NewReader(objs.Events)
 defer rd.Close()
 ```
 
-No `coll.Programs["OnExec"]`. No `"syscalls", "sys_enter_execve"` strings. The kernel-side `//bpf:section tracepoint/syscalls/sys_enter_execve` directive is the single source of truth for what `OnExec` attaches to. Rename the kernel-side function and the bindings get a new method name.
+No `coll.Programs["OnExec"]`. No `"syscalls", "sys_enter_execve"` strings. The `//bpf:section tracepoint/syscalls/sys_enter_execve` directive is the single source of truth for what `OnExec` attaches to. Rename the BPF program function and the bindings get a new method name.
 
-The bindings also re-publish the kernel-side `Event` struct and the `kindExec`/`kindOpen`/etc. constants:
+The bindings also re-publish the `Event` struct and the `kindExec`/`kindOpen`/etc. constants:
 
 ```go
 // kernel side: bpf/src/sysmon.go

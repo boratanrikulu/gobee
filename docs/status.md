@@ -27,7 +27,7 @@ Legend:
 | Pointers `*T` | ✅ | Raw `T *` in C |
 | Structs (no methods) | ✅ | |
 | Struct methods on user types | ❌ | Not supported |
-| Generics in user code | ❌ | gobee uses generics in the `bpf` package; user kernel-side code does not |
+| Generics in user code | ❌ | gobee uses generics in the `bpf` package; user BPF program code does not |
 | Slices `[]T` | ❌ | No heap-grown buffers in BPF |
 | Strings | ❌ | Not addressable in BPF |
 | Builtin maps `map[K]V` | ❌ | Use `bpf.ArrayMap` / `bpf.HashMap` etc. |
@@ -83,7 +83,7 @@ Legend:
 
 | Import path | Status | Notes |
 |---|---|---|
-| `github.com/boratanrikulu/gobee/bpf` | ✅ | The kernel-side API surface |
+| `github.com/boratanrikulu/gobee/bpf` | ✅ | The BPF API surface |
 | `unsafe` | ✅ | For `unsafe.Pointer` returned by some helpers |
 | Anything else | ❌ | Validator rejects with a clear diagnostic. The Go stdlib runs in userspace; nothing in it is callable from a BPF program |
 
@@ -129,7 +129,7 @@ Legend:
 | `BPF_MAP_TYPE_CPUMAP` | ✅ | `bpf.CpuMap` | XDP redirect to a target CPU |
 | `BPF_MAP_TYPE_XSKMAP` | ✅ | `bpf.XskMap` | XDP redirect to an AF_XDP socket |
 
-### BPF helpers (kernel-side `bpf` package)
+### BPF helpers (BPF `bpf` package)
 
 The full libbpf helper surface is auto-generated from `bpf_helper_defs.h` (libbpf v1.5.0). 196 helpers ship as typed Go stubs in `bpf/helpers_generated.go`; 15 are skipped as not BPF-safe in their current form (string-typed parameters and variadics like `bpf_trace_printk`).
 
@@ -175,7 +175,7 @@ The full libbpf helper surface is auto-generated from `bpf_helper_defs.h` (libbp
 | `(*Objects).Close()` | ✅ | Closes every program and map |
 | Per-program `Attach<Name>(...)` helpers | ✅ | Generated from each `//bpf:section` directive. XDP takes ifindex; tracepoints / kprobes / kretprobes take none |
 | `(*Objects).AttachAll(xdpIfindex int)` | ✅ | One call attaches every program; rolls back on failure |
-| Re-publish user struct types | ✅ | Layout matches kernel-side byte-for-byte, so `binary.Read` works |
+| Re-publish user struct types | ✅ | Layout matches byte-for-byte, so `binary.Read` works |
 | Re-publish user constants (capitalized) | ✅ | Lowercase `kindExec` becomes public `KindExec` |
 | Kernel-version gate | ✅ | `Load<Stem>` runs [bpfvet](https://github.com/boratanrikulu/bpfvet)'s analyzer; refuses to load if running kernel is older than the spec needs |
 
