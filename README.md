@@ -86,17 +86,16 @@ The split keeps `bpf/` a clean importable Go package (Go rejects `.c` files in n
 
 ## Status
 
-Phase 1 (XDP packet counter end-to-end) and most of phase 2 are done. See [`docs/status.md`](docs/status.md) for the full matrix: program types, map types, helpers, CO-RE features.
+See [`docs/status.md`](docs/status.md) for the canonical "what works / WIP / planned / won't support" matrix. Short version of what works today:
 
-What works today, briefly:
-
-- 8 program types: XDP, tracepoint, kprobe / kretprobe, uprobe, sock_ops, TC, cgroup_skb, LSM
-- 16 map types including ringbuf, perf_event_array, the per-CPU variants, bloom filter, LPM trie, prog_array, and the per-object storage maps (sk / task / inode)
+- 8 program types: XDP, tracepoint, kprobe / kretprobe, uprobe / uretprobe, sock_ops, TC, cgroup_skb, LSM
+- 19 map types: array, hash, LRU hash, per-CPU variants, bloom filter, LPM trie, ringbuf, perf-event array, prog array, queue, stack, the per-object storage maps (sk / task / inode), and the XDP redirect targets (devmap, cpumap, xskmap)
 - ~200 BPF helpers auto-generated from libbpf v1.5.0
 - CO-RE field reads on kernel structs, direct field access on UAPI BPF context structs
+- User-defined helper functions (top-level Go funcs without `//bpf:section`) emitted as `static __always_inline`
 - Typed Go bindings: programs and maps as struct fields, `Load<Stem>`, `Close`, per-program `Attach<Name>`, `AttachAll`
-- Kernel-version gate at load time via [bpfvet](https://github.com/boratanrikulu/bpfvet): instead of a cryptic verifier rejection on an old kernel, you get "needs kernel ≥5.8, host is 5.4"
-- Verifier-error → Go-source mapping via `gobee diagnose`
+- Kernel-version gate at load time via [bpfvet](https://github.com/boratanrikulu/bpfvet): instead of a cryptic verifier rejection on an old kernel, you get `bpf program needs kernel >= 5.8, host is 5.4`
+- Verifier errors auto-annotated with Go source positions inside `Load<Stem>` (no manual pipe to `gobee diagnose` needed)
 
 ## CI
 
@@ -129,4 +128,6 @@ The transpiler is type-checked by `go/types` at parse time, validated against th
 
 ## License
 
-MIT.
+MIT. See [LICENSE](LICENSE).
+
+Copyright (c) 2026 Bora Tanrikulu &lt;me@bora.sh&gt;
