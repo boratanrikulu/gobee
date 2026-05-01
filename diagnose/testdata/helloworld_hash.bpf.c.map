@@ -1,0 +1,7 @@
+# gobee sourcemap. Format: <c-line>\t<go-file>:<go-line>:<go-col>
+9	bpf/counter.go:10:5
+16	bpf/counter.go:13:1
+18	bpf/counter.go:14:2
+19	bpf/counter.go:15:2
+20	bpf/counter.go:16:2
+21	bpf/counter.go:17:2

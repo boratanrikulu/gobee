@@ -1,0 +1,30 @@
+func#0 @0
+Live regs before insn:
+      0: .......... (b4) w1 = 0
+      1: .1........ (63) *(u32 *)(r10 -4) = r1
+      2: .......... (bf) r2 = r10
+      3: ..2....... (07) r2 += -4
+      4: ..2....... (18) r1 = 0xffff0000c7bc9400
+      6: .12....... (85) call bpf_map_lookup_elem#1
+      7: 0......... (b7) r1 = 1
+      8: 01........ (db) r1 = atomic64_fetch_add((u64 *)(r0 +0), r1)
+      9: .......... (b4) w0 = 2
+     10: 0......... (95) exit
+0: R1=ctx() R10=fp0
+; int CountPackets(struct xdp_md *ctx) { @ counter.bpf.c:17
+0: (b4) w1 = 0                        ; R1_w=0
+; __u32 key = 0; @ counter.bpf.c:18
+1: (63) *(u32 *)(r10 -4) = r1
+mark_precise: frame0: last_idx 1 first_idx 0 subseq_idx -1
+mark_precise: frame0: regs=r1 stack= before 0: (b4) w1 = 0
+2: R1_w=0 R10=fp0 fp-8=0000????
+2: (bf) r2 = r10                      ; R2_w=fp0 R10=fp0
+3: (07) r2 += -4                      ; R2_w=fp-4
+; __u64 *count = bpf_map_lookup_elem(&PktCount, &key); @ counter.bpf.c:19
+4: (18) r1 = 0xffff0000c7bc9400       ; R1_w=map_ptr(map=PktCount,ks=4,vs=8)
+6: (85) call bpf_map_lookup_elem#1    ; R0_w=map_value_or_null(id=1,map=PktCount,ks=4,vs=8)
+7: (b7) r1 = 1                        ; R1_w=1
+; __sync_fetch_and_add(count, 1); @ counter.bpf.c:20
+8: (db) r1 = atomic64_fetch_add((u64 *)(r0 +0), r1)
+R0 invalid mem access 'map_value_or_null'
+processed 8 insns (limit 1000000) max_states_per_insn 0 total_states 0 peak_states 0 mark_read 0
