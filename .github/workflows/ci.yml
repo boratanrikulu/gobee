@@ -1,0 +1,108 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel in-progress runs for the same branch when a new commit lands.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Fast feedback: lint + unit tests + every example transpiles cleanly.
+  # Runs on Linux (so we can also exercise the clang path later) but the
+  # transpiler itself is pure Go and platform-agnostic.
+  test:
+    name: Lint, test, transpile
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: go vet
+        run: make vet
+
+      - name: go test -race
+        run: make test
+
+      - name: Translate every testdata/examples/*.go
+        run: make examples-translate
+
+  # Compile + portability check the curated examples end-to-end. This is
+  # the layer that catches "translate works but clang rejects" or "clang
+  # accepts but the BPF verifier hates the helper combo we emit".
+  build-examples:
+    name: Build examples (clang + bpfvet)
+    runs-on: ubuntu-24.04
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # clang/llvm + headers needed for `clang -target bpfel`. Ubuntu
+      # 24.04 ships clang-18 by default which has full BPF target.
+      - name: Install clang + llvm
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm libbpf-dev linux-headers-$(uname -r)
+
+      - name: Install bpfvet
+        run: go install github.com/boratanrikulu/bpfvet/cmd/bpfvet@v0.2.1
+
+      # The curated examples vendor vmlinux.h next to their BPF source.
+      # We don't bring our own — every example has its own snapshot under
+      # bpf/src/vmlinux.h.
+      - name: Build curated examples (helloworld + sysmon)
+        run: make examples-build
+
+      - name: bpfvet portability report
+        run: make examples-vet
+
+      - name: Upload built .bpf.o artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bpf-objects
+          path: |
+            example/helloworld/bpf/bin/**/*.bpf.o
+            example/sysmon/bpf/bin/**/*.bpf.o
+          retention-days: 7
+
+  # Verifier acceptance: load every built .bpf.o into the runner's
+  # kernel. Catches the one class of failures gobee can't simulate at
+  # transpile time — programs that pass clang but get rejected by the
+  # in-kernel verifier (out-of-bounds memory, missing bounds check,
+  # unsafe pointer arith, …).
+  e2e:
+    name: e2e (verifier acceptance)
+    runs-on: ubuntu-24.04
+    needs: build-examples
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install clang + llvm
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm libbpf-dev linux-headers-$(uname -r)
+
+      - name: Build curated examples
+        run: make examples-build
+
+      - name: Run verifier acceptance tests
+        run: sudo -E env "PATH=$PATH" go test -tags=integration -v ./e2e/...
