@@ -14,8 +14,9 @@ import (
 // would catch it.
 func TestExamples(t *testing.T) {
 	cases := []struct {
-		file       string
-		mustEmitC  []string
+		file         string
+		mustEmitC    []string
+		mustNotEmitC []string
 	}{
 		{
 			file: "01_timestamps.go",
@@ -182,6 +183,21 @@ func TestExamples(t *testing.T) {
 				`bpf_perf_event_output(ctx, &Events, BPF_F_CURRENT_CPU, &e, sizeof(*&e));`,
 			},
 		},
+		{
+			file: "32_sockops_cb_flags.go",
+			mustEmitC: []string{
+				`SEC("sockops")`,
+				`int InstallWriteHdrCb(struct bpf_sock_ops *ctx)`,
+				`ctx->bpf_sock_ops_cb_flags`,
+				`BPF_SOCK_OPS_WRITE_HDR_OPT_CB_FLAG`,
+				`bpf_sock_ops_cb_flags_set(ctx, (__s32)(flags))`,
+			},
+			mustNotEmitC: []string{
+				// UAPI BPF context fields use direct ctx->field access; a
+				// CO-RE read on the context pointer silently returns garbage.
+				`BPF_CORE_READ(ctx, bpf_sock_ops_cb_flags)`,
+			},
+		},
 	}
 
 	for _, tc := range cases {
@@ -205,6 +221,11 @@ func TestExamples(t *testing.T) {
 			for _, want := range tc.mustEmitC {
 				if !strings.Contains(c, want) {
 					t.Errorf("emitted C missing %q\n--- got ---\n%s", want, c)
+				}
+			}
+			for _, banned := range tc.mustNotEmitC {
+				if strings.Contains(c, banned) {
+					t.Errorf("emitted C unexpectedly contains %q\n--- got ---\n%s", banned, c)
 				}
 			}
 		})

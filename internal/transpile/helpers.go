@@ -119,6 +119,15 @@ var bpfConstants = map[string]string{
 	"BpfSockOpsHdrOptLenCb":          "BPF_SOCK_OPS_HDR_OPT_LEN_CB",
 	"BpfSockOpsWriteHdrOptCb":        "BPF_SOCK_OPS_WRITE_HDR_OPT_CB",
 
+	// Sock-ops callback flag bits (kernel BPF_SOCK_OPS_*_CB_FLAG).
+	"BpfSockOpsRtoCbFlag":                "BPF_SOCK_OPS_RTO_CB_FLAG",
+	"BpfSockOpsRetransCbFlag":            "BPF_SOCK_OPS_RETRANS_CB_FLAG",
+	"BpfSockOpsStateCbFlag":              "BPF_SOCK_OPS_STATE_CB_FLAG",
+	"BpfSockOpsRttCbFlag":                "BPF_SOCK_OPS_RTT_CB_FLAG",
+	"BpfSockOpsParseAllHdrOptCbFlag":     "BPF_SOCK_OPS_PARSE_ALL_HDR_OPT_CB_FLAG",
+	"BpfSockOpsParseUnknownHdrOptCbFlag": "BPF_SOCK_OPS_PARSE_UNKNOWN_HDR_OPT_CB_FLAG",
+	"BpfSockOpsWriteHdrOptCbFlag":        "BPF_SOCK_OPS_WRITE_HDR_OPT_CB_FLAG",
+
 	// TC actions (kernel pkt_cls.h enum).
 	"TcUnspec":     "TC_ACT_UNSPEC",
 	"TcOk":         "TC_ACT_OK",
