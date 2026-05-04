@@ -61,6 +61,20 @@ type emitter struct {
 	cLine    int             // current line in the emitted C, 1-based
 	mappings []SourceMapping // populated as statements are emitted
 	aliases  map[types.Object]string
+	tmpSeq   int // monotonic counter for synthetic names (blank-ident comma-ok)
+}
+
+// resolveLHSName returns ident.Name unless it's the Go blank identifier,
+// in which case it mints a unique synthetic C identifier. Two
+// `_, ok := Map.Lookup(...)` calls in the same scope must not emit
+// duplicate `__u8 *_ = ...` decls; the synthetic name keeps each decl
+// distinct while staying unreferenceable from user code.
+func (e *emitter) resolveLHSName(ident *ast.Ident, prefix string) string {
+	if ident.Name != "_" {
+		return ident.Name
+	}
+	e.tmpSeq++
+	return fmt.Sprintf("_%s%d", prefix, e.tmpSeq)
 }
 
 func (e *emitter) writef(format string, args ...any) {
@@ -658,12 +672,14 @@ func (e *emitter) writeMapLookup(as *ast.AssignStmt, call *ast.CallExpr, mapName
 	if err != nil {
 		return err
 	}
+	valName := e.resolveLHSName(countIdent, "lookup")
 	e.writeIndent()
-	e.writef("%s *%s = bpf_map_lookup_elem(&%s, %s);\n", valC, countIdent.Name, mapName, keyExpr)
+	e.writef("%s *%s = bpf_map_lookup_elem(&%s, %s);\n", valC, valName, mapName, keyExpr)
 
-	// Record alias: `ok` becomes the pointer's truthiness.
+	// Record alias: `ok` becomes the pointer's truthiness. Blank-ident
+	// `ok` has no Defs entry, so nothing gets registered.
 	if obj := e.prog.Info.Defs[okIdent]; obj != nil {
-		e.aliases[obj] = countIdent.Name
+		e.aliases[obj] = valName
 	}
 	return nil
 }
@@ -691,10 +707,11 @@ func (e *emitter) writeStorageGet(as *ast.AssignStmt, call *ast.CallExpr, mapNam
 	if err != nil {
 		return err
 	}
+	valName := e.resolveLHSName(valIdent, "get")
 	e.writeIndent()
-	e.writef("%s *%s = %s(&%s, %s, NULL, 0);\n", valC, valIdent.Name, helperFn, mapName, objExpr)
+	e.writef("%s *%s = %s(&%s, %s, NULL, 0);\n", valC, valName, helperFn, mapName, objExpr)
 	if obj := e.prog.Info.Defs[okIdent]; obj != nil {
-		e.aliases[obj] = valIdent.Name
+		e.aliases[obj] = valName
 	}
 	return nil
 }
@@ -1165,10 +1182,11 @@ func (e *emitter) writeRingbufReserve(as *ast.AssignStmt, mapName string, valTyp
 	if !ok {
 		return fmt.Errorf("%s: Reserve ok target must be an identifier", e.prog.FileSet.Position(as.Pos()))
 	}
+	valName := e.resolveLHSName(eventIdent, "reserve")
 	e.writeIndent()
-	e.writef("%s *%s = bpf_ringbuf_reserve(&%s, sizeof(%s), 0);\n", valC, eventIdent.Name, mapName, valC)
+	e.writef("%s *%s = bpf_ringbuf_reserve(&%s, sizeof(%s), 0);\n", valC, valName, mapName, valC)
 	if obj := e.prog.Info.Defs[okIdent]; obj != nil {
-		e.aliases[obj] = eventIdent.Name
+		e.aliases[obj] = valName
 	}
 	return nil
 }

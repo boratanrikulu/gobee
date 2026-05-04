@@ -189,6 +189,22 @@ func TestExamples(t *testing.T) {
 			},
 		},
 		{
+			file: "34_blank_lookup.go",
+			mustEmitC: []string{
+				// Two presence-only lookups in the same scope must not
+				// collide; the emitter mints distinct synthetic names.
+				`__u8 *_lookup1 = bpf_map_lookup_elem(&Deny, &key);`,
+				`__u8 *_lookup2 = bpf_map_lookup_elem(&Allow, &key);`,
+				`if (_lookup1) {`,
+				`if (!_lookup2) {`,
+			},
+			mustNotEmitC: []string{
+				// The literal Go blank identifier must never reach C.
+				`*_ =`,
+				`__u8 *_ `,
+			},
+		},
+		{
 			file: "33_endian.go",
 			mustEmitC: []string{
 				`#include <bpf/bpf_endian.h>`,
