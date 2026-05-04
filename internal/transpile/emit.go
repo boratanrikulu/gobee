@@ -402,7 +402,12 @@ func (e *emitter) writeMap(m *MapDecl) error {
 		e.writef("\t__type(key, %s);\n", keyC)
 		e.writef("\t__type(value, %s);\n", valC)
 	}
-	e.writef("\t__uint(max_entries, %d);\n", m.MaxEntries)
+	// MaxEntries == 0 only reaches here for perf_event_array (parser allows
+	// it; everything else is rejected upstream). Skipping the `max_entries`
+	// line lets libbpf auto-size the map to nr_cpus at load time.
+	if m.MaxEntries > 0 {
+		e.writef("\t__uint(max_entries, %d);\n", m.MaxEntries)
+	}
 	e.writef("} %s SEC(\".maps\");\n\n", m.Name)
 	return nil
 }

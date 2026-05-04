@@ -254,10 +254,14 @@ func tryBuildMapDecl(nameIdent *ast.Ident, vs *ast.ValueSpec, idx int, prog *Pro
 	return md, nil
 }
 
-// storageMapDirectives is the set of map kinds the kernel sizes
-// dynamically — MaxEntries is not user-controlled.
+// storageMapDirectives is the set of map kinds where MaxEntries is
+// optional because the kernel either sizes the map dynamically (storage
+// maps, kernel-sized per object) or auto-sizes to nr_cpus
+// (perf_event_array). Users may still pass MaxEntries explicitly; an
+// omitted value emits no `max_entries` line and lets libbpf fill it in.
 var storageMapDirectives = map[string]bool{
-	"task_storage":  true,
-	"sk_storage":    true,
-	"inode_storage": true,
+	"task_storage":     true,
+	"sk_storage":       true,
+	"inode_storage":    true,
+	"perf_event_array": true,
 }

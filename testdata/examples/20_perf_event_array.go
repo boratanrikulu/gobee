@@ -18,7 +18,8 @@ type SampleEvent struct {
 	TimeNs uint64
 }
 
-var Events = bpf.PerfEventArray[SampleEvent]{MaxEntries: 128}
+// MaxEntries omitted: the kernel auto-sizes perf_event_array to nr_cpus.
+var Events = bpf.PerfEventArray[SampleEvent]{}
 
 //bpf:section xdp
 func Sample(ctx *bpf.XdpMd) bpf.XdpAction {

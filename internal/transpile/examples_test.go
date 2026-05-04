@@ -182,6 +182,11 @@ func TestExamples(t *testing.T) {
 				`__uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);`,
 				`bpf_perf_event_output(ctx, &Events, BPF_F_CURRENT_CPU, &e, sizeof(*&e));`,
 			},
+			mustNotEmitC: []string{
+				// Omitted MaxEntries lets libbpf auto-size to nr_cpus; no
+				// max_entries line should appear in the emitted .maps section.
+				`max_entries`,
+			},
 		},
 		{
 			file: "33_endian.go",

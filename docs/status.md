@@ -118,7 +118,7 @@ Legend:
 | `BPF_MAP_TYPE_BLOOM_FILTER` | ✅ | `bpf.BloomFilter[T]` | `Add(*T)` / `Contains(*T) bool` |
 | `BPF_MAP_TYPE_LPM_TRIE` | ✅ | `bpf.LpmTrie[K, V]` | Key must lead with `__u32 prefixlen` |
 | `BPF_MAP_TYPE_RINGBUF` | ✅ | `bpf.RingBuf[T]` | Typed `Reserve()`/`Submit()`/`Discard()`/`Output()` |
-| `BPF_MAP_TYPE_PERF_EVENT_ARRAY` | ✅ | `bpf.PerfEventArray[T]` | Legacy alternative to ringbuf |
+| `BPF_MAP_TYPE_PERF_EVENT_ARRAY` | ✅ | `bpf.PerfEventArray[T]` | Legacy alternative to ringbuf. `MaxEntries` is optional; omit it to let libbpf auto-size to `nr_cpus` |
 | `BPF_MAP_TYPE_PROG_ARRAY` | ✅ | `bpf.ProgArray` | `TailCall(ctx, key)` for chained programs |
 | `BPF_MAP_TYPE_QUEUE` | ✅ | `bpf.Queue[T]` | `Push`/`Pop`/`Peek` |
 | `BPF_MAP_TYPE_STACK` | ✅ | `bpf.Stack[T]` | Same |
