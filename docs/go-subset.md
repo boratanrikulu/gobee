@@ -197,7 +197,7 @@ pid := bpf.GetCurrentPid()
 bpf.AtomicAdd64(&counter, 1)
 ```
 
-`bpf.AtomicAdd64` is a hand-written exception that emits `__sync_fetch_and_add` (a clang intrinsic, not a BPF helper). Everything else maps to its libbpf name: `bpf.MapLookupElem` ↔ `bpf_map_lookup_elem`, `bpf.RingbufReserve` ↔ `bpf_ringbuf_reserve`, etc.
+`bpf.AtomicAdd64` is a hand-written exception that emits `__sync_fetch_and_add` (a clang intrinsic, not a BPF helper). The byte-order helpers `bpf.Ntohl` / `Htonl` / `Ntohs` / `Htons` are also hand-written; they emit the matching `bpf_ntohl` / `bpf_htonl` / `bpf_ntohs` / `bpf_htons` macros from `<bpf/bpf_endian.h>` (gobee adds the include automatically when any of the four are referenced). Everything else maps to its libbpf name: `bpf.MapLookupElem` ↔ `bpf_map_lookup_elem`, `bpf.RingbufReserve` ↔ `bpf_ringbuf_reserve`, etc.
 
 Variadic helpers (`bpf_trace_printk`) and string-typed helpers don't have stubs yet. Use the typed ringbuf instead of `bpf_trace_printk` for now.
 

@@ -184,6 +184,14 @@ func TestExamples(t *testing.T) {
 			},
 		},
 		{
+			file: "33_endian.go",
+			mustEmitC: []string{
+				`#include <bpf/bpf_endian.h>`,
+				`SEC("sockops")`,
+				`bpf_ntohl(ctx->remote_port)`,
+			},
+		},
+		{
 			file: "32_sockops_cb_flags.go",
 			mustEmitC: []string{
 				`SEC("sockops")`,

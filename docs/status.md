@@ -136,6 +136,7 @@ The full libbpf helper surface is auto-generated from `bpf_helper_defs.h` (libbp
 | Surface | Status | Notes |
 |---|---|---|
 | `bpf.AtomicAdd64(*uint64, uint64)` | ✅ | Hand-written; emits `__sync_fetch_and_add` (clang intrinsic, not a BPF helper) |
+| `bpf.Ntohl` / `Htonl` / `Ntohs` / `Htons` | ✅ | Hand-written; emit the matching `bpf_*` macros from `<bpf/bpf_endian.h>`. The header is auto-included when any are referenced |
 | Map / storage method calls | ✅ | Type-specific methods on each map kind |
 | Auto-generated helpers (196 total) | ✅ | Names map 1:1 to libbpf via `KtimeGetNs` ↔ `bpf_ktime_get_ns`, etc. |
 | `bpf_trace_printk` (variadic) | 📋 | Needs a typed wrapper |

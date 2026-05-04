@@ -8,6 +8,24 @@ import "fmt"
 // via goNameToBpfHelper instead.
 var bpfHelperFuncs = map[string]string{
 	"AtomicAdd64": "__sync_fetch_and_add",
+	// Byte-order conversions are clang macros from <bpf/bpf_endian.h>,
+	// not BPF kernel helpers. The emitter adds the include when any of
+	// these are referenced (see usesEndianHelpers in emit.go).
+	"Ntohl": "bpf_ntohl",
+	"Htonl": "bpf_htonl",
+	"Ntohs": "bpf_ntohs",
+	"Htons": "bpf_htons",
+}
+
+// endianHelperNames is the set of bpf-package helpers that require the
+// <bpf/bpf_endian.h> include. The values are the same Go names mapped
+// in bpfHelperFuncs; this is just the lookup the emitter uses to gate
+// the include.
+var endianHelperNames = map[string]bool{
+	"Ntohl": true,
+	"Htonl": true,
+	"Ntohs": true,
+	"Htons": true,
 }
 
 // bpfHelperExpansions are typed sugar wrappers in the bpf package that
